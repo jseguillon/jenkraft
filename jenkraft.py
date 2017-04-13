@@ -13,6 +13,7 @@ DEFAULT_POS_X=0
 DEFAULT_POS_Y=MAX_OCEAN_Y+10
 DEFAULT_POS_Z=-MAX_OCEAN_Z
 
+    
 class Ocean:
     def __init__(self, id, mc):
         self.id = id
@@ -26,14 +27,9 @@ class Ocean:
         return (self.id << 8) + self.data
 
     def draw(self):
-        #clear first in case iand give a lil of time for flowings to disapear in case of statsus change
-        #self.mc.setBlocks(-32, -3, -32, 32, -3, 32, block.COBBLESTONE)
         self.mc.setBlocks(-MAX_OCEAN_X, MAX_OCEAN_Y, -MAX_OCEAN_Z,
                           MAX_OCEAN_X, MAX_OCEAN_Y, MAX_OCEAN_Z,
                           block.BEDROCK_INVISIBLE)
-        self.mc.setBlocks(-MAX_OCEAN_X, MAX_OCEAN_Y-1, -MAX_OCEAN_Z,
-                          MAX_OCEAN_X, MAX_OCEAN_Y-1, MAX_OCEAN_Z,
-                          block.WATER_STATIONARY)
         
         self.mc.setBlock(DEFAULT_POS_X, DEFAULT_POS_Y-1, DEFAULT_POS_Z, block.COBBLESTONE)
         self.mc.player.setPos(DEFAULT_POS_X, DEFAULT_POS_Y, DEFAULT_POS_Z)
@@ -44,9 +40,6 @@ class Fountain:
     """f = jenkraft.Fountain(1,mc,9,3,0)"""
     """f.addStage()"""
     """f.clear()"""
-    """f1 = jenkraft.Fountain(1,mc, 10, 26, -20)"""
-    """f2 = jenkraft.Fountain(1,mc, 6, 26, -10)"""
-    """f3 = jenkraft.Fountain(1,mc, 0, 26, 0)"""
     
     def __init__(self, id, mc, x, y, z, height=1, status=JOB_RUNNING):
         self.id = id
