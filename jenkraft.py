@@ -1,15 +1,29 @@
-#FIXME : hash & cmps for all classes 
+#FIXME : hash & cmps for all classes
 
+#AT THIS TIME : "Ocean" ? at least : shoudl blast ? YES A BLAST
+#Need to rotate on jons
+#Use a yaml external config file
+#Change material depengin on job
+#And use kind of static ref for mc
+
+from mcpi.minecraft import Minecraft
 from mcpi import block
 import time
 import threading
+import requests, json
+import random
+import collections
 
-JOB_RUNNING=1
-JOB_FAILED=2
-JOB_ABORTED=3
-JOB_REFRESH_TIME=60 #Refresh each 60s
+JOB_URL="http://192.168.99.100:8080/job/jenkraft/wfapi/runs"
+JOB_AUTH=('jse', 'jse')
 
-MAX_OCEAN_Y=14
+JOB_RUNNING="IN_PROGRESS"
+JOB_SUCCESS="SUCCESS"
+JOB_FAILED="FAILED"
+JOB_ABORTED="ABORTED"
+JOB_REFRESH_TIME=10 #Refresh each 60s
+
+MAX_OCEAN_Y=5
 MAX_OCEAN_X=64
 MAX_OCEAN_Z=MAX_OCEAN_X #squared
 
@@ -22,37 +36,117 @@ DEFAULT_BRANCH_INC_Z=10
 DEFAULT_BRANCH_START_Z=-40
 DEFAULT_BRANCH_START_Y=15
 
+
 class Scene:
     def __init__(self, mc):
         self.mc = mc
+        self.jobs = {}
+        ocean = Ocean(1, mc)
 
-    def loop():
+        job  = Job(1, JOB_URL, JOB_AUTH, block.DIAMOND_ORE, mc)
+        job.start()
+        self.jobs[1] = job
+
+        self.loop()
+
+    def loop(self):
         #Start Infinitz loop threaded branches
         #Parse branches and ensure all last job on same x ?
+        i=0
+        while True:
+            #for job in self.jobs:
+            i += 1
+            x = -70+(i)
+            mc.player.setPos(x,DEFAULT_POS_Y,DEFAULT_POS_Z)
+            mc.setBlock(x,DEFAULT_POS_Y-1,DEFAULT_POS_Z, block.BEDROCK_INVISIBLE)
 
-        #Start player move from last job of branch to last-6 change branch
-	print("Discovering branches")	
-        
+            #TODO 12*job_id, add wool for last five build ? loop only one 
+            if x >64:
+                i = 1
+
+            time.sleep(1+(random.randint(0,10)/10))
+
 class Job(threading.Thread):
     """Jobs : can be a branch or a simple job, only URL is known by code """
-    def __init__(self, id, url, mc):
+    def __init__(self, id, url, auth, material, mc):
         super(Job, self).__init__()
         self._stop_event = threading.Event()
         self.setDaemon(True)
         self.id = id
         self.mc = mc
-        self.fountains = []
+        self.material=material
+        self.fountains = {} #int id: (status: , stages: , f:)
 
     def run(self):
-        while True : 
+        while True :
         #TODO : get list of jobs, with number of stages and status
-            print("[job-{}] Discovering".format(self.id)) 
+            print("[job-{}] Discovering".format(self.id))
+            #FIXME : Try catch is needed there to ensure jobs keep polling
+            ##stages=response = requests.get(sefl.url,  auth=JOB_AUTH)
+            with open('jenkraft.example.json') as data_file:
+                data = json.load(data_file)
+
+            job_count = 0
+            for job_data in data:
+                stagesCount = 0
+                job_id = int(job_data['id'])
+                job_status = job_data['status']
+
+                print(job_data['id']+" : "+job_data['status'])
+
+                #Because of declarative pipelines we loop over all stages
+                #If any of the stages is different from SUCCESS then stop couting
+                #Because we want to stop and consider only stages that really ran
+                for stage in job_data['stages']:
+                    stagesCount = stagesCount + 1
+                    print(" - stage {} status : {} ".format(stage['id'], stage['status']))
+                    if stage['status'] != "SUCCESS":
+                        break
+                print (" - stages count {} ".format(stagesCount))
+
+                if (job_id in self.fountains):
+                    print ("updating build : {}".format(job_id))
+                    self.fountains[job_id]['stages'] = stagesCount
+                    self.fountains[job_id]['status'] = job_status
+
+                else:
+                    print ("creating build : {}".format(job_id))
+                    self.fountains[job_id] = {'stages': stagesCount, 'status': job_status, 'f': None}
+
+            print("now draw with ordered list")
+
+            sorted_jobs = collections.OrderedDict(sorted(self.fountains.iteritems(), key=lambda x: x[0]))
+            for job_id in sorted_jobs:
+                #TODO (FEATURE) : use a type of encoding for remembering id ?
+
+                if self.fountains[job_id]['f'] is not None:
+                    print ("fountain already referenced : {}".format(job_id))
+
+                else:
+                    print("Creating new fountain {}, {}, {}, {}".format(
+                    -64+(sorted_jobs.keys().index(job_id)*12),
+                        MAX_OCEAN_Y,
+                        -(MAX_OCEAN_Z-10), self.material))
+                    #TODO : 60=branche relative index, other step=12, step= 10
+                    f = Fountain(1, self.mc,
+                        -64+(sorted_jobs.keys().index(job_id)*12),
+                        MAX_OCEAN_Y,
+                        -(MAX_OCEAN_Z-10), self.material)
+
+                    f.draw_flow()
+                    self.fountains[job_id]['f'] = f
+
+                f = self.fountains[job_id]['f']
+                #//TODO : on finish : met them flow
+                f.set_stages(self.fountains[job_id]['stages'])
+                f.set_status(self.fountains[job_id]['status'])
+
+                #expe : limit
+                if (job_count>99):
+                    break
+
+            print("end : sleeping")
             time.sleep(JOB_REFRESH_TIME)
-
-            #A branch goes from left to right with a fixed z
-            for x in self.fountains:
-
-                self.fountain.draw()
 
     def stop(self):
         self._stop_event.set()
@@ -68,11 +162,14 @@ class Job(threading.Thread):
         return (self.id << 8)
 
     def add_fountain(f):
-        self.fountains.append(f) #TODO : add a fountain with good space location 
+        self.fountains.append(f) #TODO : add a fountain with good space location
 
     def clear(self):
-        for x in self.fountains:
-            x.clear()
+        #TODO
+        for f in self.fountains:
+            f['f'].clear()
+            print("clear fountains")
+            #    x.clear()
 
 class Ocean:
     def __init__(self, id, mc):
@@ -88,12 +185,12 @@ class Ocean:
 
     def draw(self):
         #Bedrock as an ocean
-        self.mc.setBlocks(-MAX_OCEAN_X, MAX_OCEAN_Y, -MAX_OCEAN_Z,
-                          MAX_OCEAN_X, MAX_OCEAN_Y, MAX_OCEAN_Z,
+        self.mc.setBlocks(-MAX_OCEAN_X, MAX_OCEAN_Y-2, -MAX_OCEAN_Z,
+                          MAX_OCEAN_X, MAX_OCEAN_Y-5, MAX_OCEAN_Z,
                           block.BEDROCK_INVISIBLE)
 
         #Init scene
-        self.mc.setBlock(DEFAULT_POS_X, DEFAULT_POS_Y-1, DEFAULT_POS_Z, block.COBBLESTONE)
+        self.mc.setBlock(DEFAULT_POS_X, DEFAULT_POS_Y-1, DEFAULT_POS_Z, block.BEDROCK_INVISIBLE)
         self.mc.player.setPos(DEFAULT_POS_X, DEFAULT_POS_Y, DEFAULT_POS_Z)
 
 
@@ -103,7 +200,7 @@ class Fountain:
     """f.addStage()"""
     """f.clear()"""
 
-    def __init__(self, id, mc, x, y, z, height=1, status=JOB_RUNNING):
+    def __init__(self, id, mc, x, y, z, material=block.COBBLESTONE, status=JOB_RUNNING, height=1):
         self.id = id
         self.mc = mc
         self.status = status
@@ -112,7 +209,8 @@ class Fountain:
         self.x = x
         self.y = y
         self.z = z
-        self.height = 1
+        self.material = material
+        self.height = height
         self.build_base()
         self.add_stage()
 
@@ -123,15 +221,26 @@ class Fountain:
         return (self.id << 8) + self.data
 
     def build_base(self):
-        self.mc.setBlocks(self.x-4,self.y-1,self.z-4,
-                          self.x+4,self.y-1,self.z+4,
-                          block.GRASS)
+        #Blast
+        self.mc.setBlocks(self.x-6,self.y,self.z-12,
+                          self.x+6,self.y+200,self.z+12,
+                          block.AIR)
+
         self.mc.setBlocks(self.x-2,self.y,self.z-2,
                           self.x+2,self.y,self.z+2,
-                          block.COBBLESTONE)
+                          self.material)
         self.mc.setBlocks(self.x-1,self.y,self.z-1,
                           self.x+1,self.y,self.z+1,
                           block.AIR)
+
+        self.mc.setBlocks(self.x-4,self.y-1,self.z-4,
+                          self.x+4,self.y-1,self.z+4,
+                          self.material)
+
+
+    def set_stages(self, num):
+        self.height=num
+        self.draw_flow()
 
     def add_stage(self):
         self.height+=1
@@ -155,6 +264,12 @@ class Fountain:
                           self.x+4,self.y+self.height,self.z+4,
                           block.AIR)
 
+    def set_status(self, status):
+        print(" status {}".format(status))
+        self.status=status
+        self.draw_flow()
+        self.previous_status=self.status
+
     def set_running(self):
         self.status=JOB_RUNNING
         self.draw_flow()
@@ -169,3 +284,6 @@ class Fountain:
         self.status=JOB_ABORTED
         self.draw_flow()
         self.previous_status=self.status
+
+mc = Minecraft.create()
+scene = Scene(mc)
