@@ -1,60 +1,67 @@
 # jenkraft.py
 
-jenkraft.py is jenkins REST exploring for Minecraft interraction
+Jenkraft.py is Jenkins Pipelines REST exploring for Minecraft interraction.
 
-## Start
+It draws builds per job with a fountain design :
+- Water fountain with base closed : RUNNING,
+- Water fountain with base open : SUCCESS,
+- Lava fountain with base open : FAILED,
+- Glass fountain : ABORTED,
+- Water fountain with flames : UNSTABLE.
 
-Launch python2 `python` then `execfile('jenkraft.py')`
+Height depends on the number of stages that where succesfull.
+
+## Install
+
+### Download Jenkraft
+
+Downloading Jenkraft can be done :
+ - by cloning master branch from github  : `git clone https://github.com/jseguillon/jenkraft.py.git`
+ - by downloading and unzipping master archive located at https://github.com/jseguillon/jenkraft.py/archive/master.zip
+
+### Minecraft pi edition
+
+*NOTE* : this has been tested only with raspbian distrib.
+
+First you need to install python-yaml dependency :  `sudo apt-get install python-yaml`
+
+Then you can start Minecraft pi edition and go to Configuration section.
+
+### Minetest
+*IMPORTANT* : this only works with Minetest 0.4.13 and has only be tested on windows 10.
+
+Minetest is a Minecraft alternative that can be combined with a mod allows Minetest to be controled by python.
+
+First download Minetest 0.4.13 ( https://github.com/minetest/minetest/releases/tag/0.4.13) then install.
+
+Download the raspberryjammod mod for Minetest ( https://github.com/arpruss/raspberryjammod-minetest/archive/master.zip) then unzip.
+
+Place the `raspberryjammod` in your mods directory (should be C:\games\Minetest\mods).
+
+Download the default minetest game (https://github.com/minetest/minetest_game/releases/tag/0.4.13) and copy wool mod wihch is needed for raspberryjammod.
+
+Open your minetest.conf file and set `secure.enable_security = false`.
+
+At last, you now can open Minetest, create a game, activate the mods and got to Configuration section.
 
 ## Configuration
 
-TODO yaml config
+Sample config.yml describe the config structure :
+```
+jobs:
+  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/job/PR-493/wfapi/runs"
+    block: GRASS
+    #user: user
+    #pass: pass
+```
+block is the block that will be used to draw the fountains for the job. User and pass can be defined (pass should be the API Token of user / not your real password).
 
-# WIP Zone
+## Start
+
+Launch python2 `python` then type `execfile('jenkraft.py')`. You can do this on your pi our using new `bash` command from Windows 10.
+
+# WIP dev Zone
 
 ## A fountain
 
-TODO : ascii schema for more comprehensive
-
-## Notes for developping
-
-### Starting
-
-from mcpi.minecraft import Minecraft
-from mcpi import block
-
-mc = Minecraft.create()
-
-mc.saveCheckpoint()
-
-import jenkraft
-ocean = jenkraft.Ocean(1, mc)
-
-### Dealing with jobs
-
-job = jenkraft.Job(1, "test", mc)
-job.start()
-
-### Dealing with fountains
-
-f = jenkraft.Fountain(1,mc, 24, 15, -40)
-f.add_stage()
-f.clear()
-
-### Position for branches
-
-=> -24,-12,0,12,24
-=> -40, -30, -10, 0, 10, 20, 30, 40, 50
-
-### Materials that could be used as base for fountains
-
-GRASS, DIRT, COBBLESTONE, DIAMOND_ORE, STONE_BRICK, GOLD_ORE, IRON_ORE, GOLD_BLOCK, IRON_BLOCK, STONE_SLAB_DOUBLE, STONE_SLAB, BRICK_BLOCK, MOSS_STONE, DIAMOND_BLOCK, LAPIS_LAZULI_ORE, LAPIS_LAZULI_BLOCK, SANDSTONE, COBWEB, GRASS_TALL, REDSTONE_ORE, GLOWSTONE_BLOCK
-
-
-### Other usefull commands
-reload(jenkraft)
-
-mc.postToChat("Hello world")
-
-## Refs
-http://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+TODO : ascii schema for better understand on how things are done
