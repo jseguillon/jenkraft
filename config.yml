@@ -1,0 +1,19 @@
+#jenkraft sample config files
+#branches are list of urls + block + optional user & pass
+#recommended blocks for jobs are GRASS, DIRT, COBBLESTONE, DIAMOND_ORE, STONE_BRICK, GOLD_ORE, IRON_ORE, GOLD_BLOCK, IRON_BLOCK, STONE_SLAB_DOUBLE, STONE_SLAB, BRICK_BLOCK, MOSS_STONE, DIAMOND_BLOCK, LAPIS_LAZULI_ORE, LAPIS_LAZULI_BLOCK, SANDSTONE, COBWEB, GRASS_TALL, REDSTONE_ORE, GLOWSTONE_BLOCK
+description: "sample jenkraft config file"
+
+jobs:
+  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/job/PR-493/wfapi/runs"
+    block: GRASS
+    #user: user
+    #pass: pass
+
+  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs"
+    block: COBBLESTONE
+
+  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/view/change-requests/job/PR-375/wfapi/runs"
+    block: IRON_ORE
+
+  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs"
+    block: DIAMOND_ORE

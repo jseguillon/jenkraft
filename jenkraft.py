@@ -13,9 +13,8 @@ import threading
 import requests, json
 import random
 import collections
+import yaml
 
-JOB_URL="http://192.168.99.100:8080/job/jenkraft/wfapi/runs"
-JOB_AUTH=('jse', 'jse')
 
 JOB_RUNNING="IN_PROGRESS"
 JOB_NOT_EXECUTED="NOT_EXECUTED"
@@ -38,6 +37,7 @@ DEFAULT_BRANCH_INC_Z=10
 DEFAULT_BRANCH_START_Z=-40
 DEFAULT_BRANCH_START_Y=15
 
+#Generic FIXME: handle exceptions
 
 class Scene:
     def __init__(self, mc):
@@ -45,18 +45,29 @@ class Scene:
         self.jobs = []
 
         #TODO yml config (+config per branch alley height (or dynamic walk height ? ))
-        for i, m, url, auth in [ (0, block.GRASS, "https://ci.jenkins.io/job/Plugins/job/git-plugin/job/PR-493/wfapi/runs", None),
-            (1, block.COBBLESTONE, "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs", None),
-            (2, block.IRON_ORE, "https://ci.jenkins.io/job/Plugins/job/git-plugin/view/change-requests/job/PR-375/wfapi/runs", None),
-            (3, block.DIAMOND_ORE, "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs", None) ]:
-            #job  = Job(i, JOB_URL, JOB_AUTH, m, mc)
-            job = Job(i, url, auth, m, self.mc)
-            job.start()
-            self.jobs.append(job)
-            time.sleep(2)
+        with open('config.yml') as stream:
+            try:
+                yaml_data = yaml.safe_load(stream)
+                i=0
+                for job_config in yaml_data['jobs']:
+                    #job  = Job(i, JOB_URL, JOB_AUTH, m, mc)
+                    #FIXME handle auht
+                    auth = None
+                    if 'user' in job_config:
+                        auth = (job_config['user'], job_config['pass'])
 
-        self.do_loop = True
-        self.loop()
+                    job = Job(i, job_config['url'], auth, eval("block.{}".format(job_config['block'])), self.mc)
+                    job.start()
+                    self.jobs.append(job)
+
+                    i+=1
+                    time.sleep(2)
+
+                self.do_loop = True
+                self.loop()
+
+            except yaml.YAMLError as exc:
+                print(exc)
 
     def loop(self):
         i=0
@@ -96,6 +107,7 @@ class Job(threading.Thread):
         self.id = id
         self.mc = mc
         self.url = url
+        self.auth = auth
         self.material=material
         #TODO : would be clearer to have a build list instead of fountain keyword
         self.fountains = {} #int id: (status: , stages: , f:)
@@ -110,11 +122,8 @@ class Job(threading.Thread):
     def collect(self):
         print("[job-{}] Discovering".format(self.id))
         #FIXME : Try catch is needed there to ensure jobs keep polling
-        response = requests.get(self.url)
+        response = requests.get(self.url, auth=self.auth)
         data = json.loads(response.text)
-        #fjson = 'jenkraft.example.{}.json'.format((self.id%2))
-        #with open(response) as data_file:
-        #    data = json.load(data_file)
 
         job_count = 0
         for job_data in data:
