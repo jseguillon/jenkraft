@@ -4,16 +4,16 @@
 description: "sample jenkraft config file"
 
 jobs:
-  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/job/PR-493/wfapi/runs"
+  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/job/PR-493/"
     block: GRASS
     #user: user
     #pass: pass
 
-  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs"
+  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/"
     block: COBBLESTONE
 
-  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/view/change-requests/job/PR-375/wfapi/runs"
+  - url: "https://ci.jenkins.io/job/Plugins/job/git-plugin/view/change-requests/job/PR-375"
     block: IRON_ORE
 
-  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26/wfapi/runs"
+  - url: "https://ci.jenkins.io/job/Infra/job/backend-extension-indexer/job/PR-26"
     block: DIAMOND_ORE

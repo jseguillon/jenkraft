@@ -14,7 +14,9 @@ import requests, json
 import random
 import collections
 import yaml
+import urlparse
 
+API_SUFFIX="./wfapi/runs"
 
 JOB_RUNNING="IN_PROGRESS"
 JOB_NOT_EXECUTED="NOT_EXECUTED"
@@ -50,13 +52,11 @@ class Scene:
                 yaml_data = yaml.safe_load(stream)
                 i=0
                 for job_config in yaml_data['jobs']:
-                    #job  = Job(i, JOB_URL, JOB_AUTH, m, mc)
-                    #FIXME handle auht
                     auth = None
                     if 'user' in job_config:
                         auth = (job_config['user'], job_config['pass'])
 
-                    job = Job(i, job_config['url'], auth, eval("block.{}".format(job_config['block'])), self.mc)
+                    job = Job(i, urlparse.urljoin(job_config['url'], API_SUFFIX), auth, eval("block.{}".format(job_config['block'])), self.mc)
                     job.start()
                     self.jobs.append(job)
 
