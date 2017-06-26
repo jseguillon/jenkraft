@@ -1,8 +1,8 @@
 # jenkraft.py
 
-Jenkraft.py is Jenkins Pipelines REST exploring for Minecraft interraction.
+Explore Jenkins jobs in Minecraft® pi or Minetest
 
-It draws builds per job with a fountain design :
+jenkraft.py renders builds per job with a fountain design :
 - Water fountain with base closed : RUNNING,
 - Water fountain with base open : SUCCESS,
 - Lava fountain with base open : FAILED,
@@ -34,15 +34,17 @@ Minetest is a Minecraft alternative that can be combined with a mod allows Minet
 
 First download Minetest 0.4.13 ( https://github.com/minetest/minetest/releases/tag/0.4.13) then install.
 
-Download the raspberryjammod mod for Minetest ( https://github.com/arpruss/raspberryjammod-minetest/archive/master.zip) then unzip.
+Download the raspberryjammod mod for Minetest from my own fork : https://github.com/jseguillon/raspberryjammod-minetest/archive/master.zip then unzip.
 
 Place the `raspberryjammod` in your mods directory (should be C:\games\Minetest\mods).
 
-Download the default minetest game (https://github.com/minetest/minetest_game/releases/tag/0.4.13) and copy wool mod wihch is needed for raspberryjammod.
+Download the default minetest game : https://github.com/minetest/minetest_game/releases/tag/0.4.13 and copy wool mod wihch is needed for raspberryjammod.
+
+Copy the `mcpipy` directory included in the raspberryjammod, to the root of your jenkraft.py donwload/clone.
 
 Open your minetest.conf file and set `secure.enable_security = false`.
 
-At last, you now can open Minetest, create a game, activate the mods and got to Configuration section.
+At last, you now can open Minetest, create a game, activate the mods and continue installation.
 
 ## Configuration
 
