@@ -26,6 +26,7 @@ JOB_FAILED="FAILED"
 JOB_ABORTED="ABORTED"
 JOB_REFRESH_TIME=30 #Refresh each 30s
 
+#TODO : clean or rename since "Ocean" is no more handled as an object but a consequence of liquids flowing
 MAX_OCEAN_Y=5
 MAX_OCEAN_X=64
 MAX_OCEAN_Z=MAX_OCEAN_X #squared
@@ -46,7 +47,7 @@ class Scene:
         self.mc = mc
         self.jobs = []
 
-        #TODO yml config (+config per branch alley height (or dynamic walk height ? ))
+        #TODO config per branch alley height (or dynamic walk height ? )
         with open('config.yml') as stream:
             try:
                 yaml_data = yaml.safe_load(stream)
@@ -82,12 +83,11 @@ class Scene:
                     x = -70+(i) #TODO : more than 6 latest builds is useless, pause earlyer, walk slowly
 
                     #Don't fall
-                    #TODO : might better draw this while drawing fountains ?
                     mc.setBlocks(x-1,DEFAULT_POS_Y-1,z-1, x+1,DEFAULT_POS_Y-1,z+1, block.GLASS)
                     time.sleep(0.1)
                     mc.player.setPos(x,DEFAULT_POS_Y,z)
 
-                    #FIXME: this is not a good pattern
+                    #FIXME: this is not a good game pattern
                     time.sleep(1+(random.randint(0,10)/10))
 
                     if (x>=(-70 + 10*len(job.fountains))):
@@ -169,18 +169,19 @@ class Job(threading.Thread):
                 f = Fountain(1, self.mc,
                     -64+(sorted_jobs.keys().index(job_id)*12),
                     MAX_OCEAN_Y,
-                    -(MAX_OCEAN_Z-10)+self.id*12, self.material)
+                    -(MAX_OCEAN_Z-10)+self.id*12, self.material, self.fountains[job_id]['status'], self.fountains[job_id]['stages'])
 
                 self.fountains[job_id]['f'] = f
                 time.sleep(10)
             f = self.fountains[job_id]['f']
-            #FIXME: should not changes representation if nor stages nor status is changed
-            #Plus TODO : if something changed, would be good to teleport to position before rendering (pause loop, teleport, sleep 10, loop again)
-            f.set_stages(self.fountains[job_id]['stages'])
 
-            #FIXME: set status handles draw_flow cause of previous status handle. Refactor with switch_state ?
-            f.set_status(self.fountains[job_id]['status'])
-            #f.draw_flow()
+            #TODO : if something changed, would be good to teleport to position before rendering (pause loop, teleport, sleep 10, loop again)
+            should_draw = f.set_stages(self.fountains[job_id]['stages'])
+
+            should_draw = should_draw or f.set_status(self.fountains[job_id]['status'])
+
+            if should_draw:
+                f.draw_flow()
 
     def stop(self):
         self._stop_event.set()
@@ -215,6 +216,7 @@ class Fountain:
         self.id = id
         self.mc = mc
         self.status = status
+        self.previous_status = status
         #Keep old status cause flowing water replaced by flowing lava involves wait
         self.previous_status = status
         self.x = x
@@ -261,7 +263,10 @@ class Fountain:
                           block.COBBLESTONE)
 
     def set_stages(self, num):
+        prev_height = self.height
         self.height=num
+        if prev_height != self.height:
+            return True
 
     def add_stage(self):
         self.height+=1
@@ -283,27 +288,23 @@ class Fountain:
                 width=1
             self.mc.setBlocks(self.x-width, self.y, self.z-width, self.x+width, self.y+self.height,self.z+width,block_to_build)
 
-        #FIXME: in case of snow : hole y +1 may block liquid
         #if done -> let liquid flow away
         if (self.status in (JOB_SUCCESS, JOB_FAILED, JOB_ABORTED, JOB_UNSTABLE)):
             for x,z in [ (2,0), (-2,0), (0,2), (0,-2) ]:
                 self.mc.setBlock(self.x+x, self.y, self.z+z, block.AIR)
 
-        #Unstable builds get flammes 
+        #Unstable builds get flammes
         if (self.status==JOB_UNSTABLE):
             self.mc.setBlocks(self.x-1, self.y+self.height+2, self.z-1, self.x+1, self.y+self.height+2,self.z+1,block.FIRE)
 
-        #FIXME: at least deprecated
-        def clear(self):
-            self.mc.setBlocks(self.x-4,self.y-1,self.z-4,
-                              self.x+4,self.y+self.height,self.z+4,
-                              block.AIR)
+        self.previous_status=self.status
 
     def set_status(self, status):
         print(" status {}".format(status))
-        self.status=status
-        self.draw_flow()
         self.previous_status=self.status
+        self.status=status
+        if (self.status != self.previous_status):
+            return True
 
     def set_running(self):
         self.status=JOB_RUNNING
