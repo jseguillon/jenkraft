@@ -15,36 +15,29 @@ Height depends on the number of stages that where succesfull.
 
 ### Download Jenkraft
 
-Downloading Jenkraft can be done :
- - by cloning master branch from github  : `git clone https://github.com/jseguillon/jenkraft.py.git`
- - by downloading and unzipping master archive located at https://github.com/jseguillon/jenkraft.py/archive/master.zip
+Download Jenkraft : clone master branch `git clone https://github.com/jseguillon/jenkraft.py.git` or download archive https://github.com/jseguillon/jenkraft.py/archive/master.zip
 
-### Minecraft pi edition
+### Minecraft® pi edition
 
 *NOTE* : this has been tested only with raspbian distrib.
 
 First you need to install python-yaml dependency :  `sudo apt-get install python-yaml`
 
-Then you can start Minecraft pi edition and go to Configuration section.
+Then you can start Minecraft® pi edition and go to Configuration section.
 
 ### Minetest
-*IMPORTANT* : this only works with Minetest 0.4.13 and has only be tested on windows 10.
 
-Minetest is a Minecraft alternative that can be combined with a mod allows Minetest to be controled by python.
+*IMPORTANT* : this only works with Minetest *0.4.13* and has only been tested on windows 10.
 
-First download Minetest 0.4.13 ( https://github.com/minetest/minetest/releases/tag/0.4.13) then install.
+Minetest is a Minecraft alternative that can be combined with a mod allows Minetest to be controled by python :
+- download Minetest 0.4.13 : https://github.com/minetest/minetest/releases/tag/0.4.13) then install,
+- download the raspberryjammod mod for Minetest : https://github.com/arpruss/raspberryjammod-minetest/archive/master.zip then unzip,
+- place the `raspberryjammod` in your mods directory (should be C:\games\Minetest\mods),
+- download the default minetest game : https://github.com/minetest/minetest_game/releases/tag/0.4.13 and copy wool mod wihch is needed for raspberryjammod.
+- copy the `mcpipy` directory included in the raspberryjammod, to the root of your jenkraft.py donwload/clone.
+- open your minetest.conf file and set `secure.enable_security = false`.
 
-Download the raspberryjammod mod for Minetest from my own fork : https://github.com/jseguillon/raspberryjammod-minetest/archive/master.zip then unzip.
-
-Place the `raspberryjammod` in your mods directory (should be C:\games\Minetest\mods).
-
-Download the default minetest game : https://github.com/minetest/minetest_game/releases/tag/0.4.13 and copy wool mod wihch is needed for raspberryjammod.
-
-Copy the `mcpipy` directory included in the raspberryjammod, to the root of your jenkraft.py donwload/clone.
-
-Open your minetest.conf file and set `secure.enable_security = false`.
-
-At last, you now can open Minetest, create a game, activate the mods and continue installation.
+Hurray ! You can now open Minetest, create a game, activate the mods and continue to Configuration.
 
 ## Configuration
 
