@@ -325,7 +325,7 @@ class Fountain:
 
         #Unstable builds get flammes
         if (self.status==JOB_UNSTABLE):
-            self.mc.setBlocks(self.x-1, self.y+self.height+2, self.z-1, self.x+1, self.y+self.height+2,self.z+1,block.FIRE)
+            self.mc.setBlocks(self.x-1, self.y+self.height+2, self.z-1, self.x+1, self.y+self.height+2,self.z+1,block.TNT)
 
         self.previous_status=self.status
 

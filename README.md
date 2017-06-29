@@ -7,7 +7,7 @@ jenkraft.py renders builds per job with a fountain design :
 - Water fountain with base open : SUCCESS,
 - Lava fountain with base open : FAILED,
 - Glass fountain : ABORTED,
-- Water fountain with flames : UNSTABLE.
+- Water fountain with TNT on top : UNSTABLE.
 
 Height depends on the number of stages that where succesfull.
 
