@@ -46,6 +46,7 @@ class Scene:
     def __init__(self, mc):
         self.mc = mc
         self.jobs = []
+        mc.events.clearAll()
 
         #TODO config per branch alley height (or dynamic walk height ? )
         with open('config.yml') as stream:
@@ -75,25 +76,55 @@ class Scene:
         while self.do_loop is True:
             for job in self.jobs:
                 print("job watching {}".format(job.id))
+                self.mc.postToChat("On your right is job : ") #this should be said about each 5 builds cause chat can disapear (use modulo)
+                self.mc.postToChat("{}".format(job.url)) #TODO would be great to be able to override in config
                 z = DEFAULT_POS_Z + job.id*12 + 4
                 exit_job = False
                 i=0
-                while self.do_loop is True and exit_job is False:
-                    i += 1
-                    x = -70+(i) #TODO : more than 6 latest builds is useless, pause earlyer, walk slowly
 
-                    #Don't fall
-                    mc.setBlocks(x-1,DEFAULT_POS_Y-1,z-1, x+1,DEFAULT_POS_Y-1,z+1, block.GLASS)
-                    time.sleep(0.1)
-                    mc.player.setPos(x,DEFAULT_POS_Y,z)
+                try:
+                    while self.do_loop is True and exit_job is False:
+                        i += 1
+                        x = -70+(i) #TODO : more than 6 latest builds is useless, pause earlyer, walk slowly
 
-                    #FIXME: this is not a good game pattern
-                    time.sleep(1+(random.randint(0,10)/10))
+                        #if block.GLASS in mc.events.pollBlockHits().entityId:
+                        blockHits = mc.events.pollBlockHits()
+                        mc.events.clearAll()
+                        #FIXME Minetest for => face is not entityId ! Since touch is not break => could poll what block is touched at a waht place instead of tweaking this ?
+                        #TEST on raspberry pi !
+                        if next((x for x in blockHits if mc.getBlock(x.pos) == block.GLASS.id), None) is not None:
+                            self.mc.postToChat("Autowalk stoppped. Awaiting a new glass to be punched...")
+                            reWalk = False
+                            while not reWalk:
+                                time.sleep(1)
+                                blockHits = mc.events.pollBlockHits()
+                                mc.events.clearAll()
+                                if next((x for x in blockHits if mc.getBlock(x.pos) == block.GLASS.id), None):
+                                    self.mc.postToChat("Autowalk on")
+                                    reWalk = True
 
-                    if (x>=(-70 + 10*len(job.fountains))):
-                        exit_job = True
+                        #if next((x for x in a if x.entityId == block.GLASS), None) is not None:
+
+                        #Don't fall
+                        mc.setBlocks(x-1,DEFAULT_POS_Y-1,z-1, x+5,DEFAULT_POS_Y-1,z-1, block.GLASS)
+                        time.sleep(0.1)
+                        mc.player.setPos(x,DEFAULT_POS_Y,z-0.5)
+
+                        #FIXME: this is not a good game pattern
+                        time.sleep(1+(random.randint(0,10)/10))
+
+                        if (x>=(-70 + 10*len(job.fountains))):
+                            exit_job = True
+
+                except:
+                    print "GOT A PROBLEM"
                 #Sleep more before changing job
+                self.mc.postToChat("Stay on watching latest job for 10 seconds...")
                 time.sleep(10)
+
+
+    def start_loop(self):
+        self.do_loop = True
 
     def stop_loop(self):
         self.do_loop = False
@@ -116,7 +147,6 @@ class Job(threading.Thread):
         while True :
             self.collect()
             self.draw()
-            print("end : sleeping")
             time.sleep(JOB_REFRESH_TIME)
 
     def collect(self):
