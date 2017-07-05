@@ -34,7 +34,7 @@ Minetest is a Minecraft alternative that can be combined with a mod allows Minet
 - download the raspberryjammod mod for Minetest : https://github.com/arpruss/raspberryjammod-minetest/archive/master.zip then unzip,
 - place the `raspberryjammod` in your mods directory (should be C:\games\Minetest\mods),
 - download the default minetest game : https://github.com/minetest/minetest_game/releases/tag/0.4.13 and copy wool mod wihch is needed for raspberryjammod.
-- copy the `mcpipy` directory included in the raspberryjammod, to the root of your jenkraft.py donwload/clone.
+- copy the `mcpi` directory included in the raspberryjammod, in `mcpipy` folder, to the root of your jenkraft.py donwload/clone.
 - open your minetest.conf file and set `secure.enable_security = false`.
 
 Hurray ! You can now open Minetest, create a game, activate the mods and continue to Configuration.
@@ -54,6 +54,12 @@ block is the block that will be used to draw the fountains for the job. User and
 ## Start
 
 Launch python2 `python` then type `execfile('jenkraft.py')`. You can do this on your pi our using new `bash` command from Windows 10.
+
+## Actions
+
+One action is available : use the sword on any Glass block (on footpath for example) to pause/unpause autowalk. On raspberry pi : use punch (right click), on Minetest use left button but do not break the block.
+
+
 
 # WIP dev Zone
 
