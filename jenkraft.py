@@ -46,6 +46,7 @@ class Scene:
     def __init__(self, mc):
         self.mc = mc
         self.jobs = []
+        self.do_loop = True
         mc.events.clearAll()
 
         #TODO config per branch alley height (or dynamic walk height ? )
@@ -59,13 +60,18 @@ class Scene:
                         auth = (job_config['user'], job_config['pass'])
 
                     job = Job(i, urlparse.urljoin(job_config['url'], API_SUFFIX), auth, eval("block.{}".format(job_config['block'])), self.mc)
-                    job.start()
                     self.jobs.append(job)
 
                     i+=1
-                    time.sleep(2)
 
-                self.do_loop = True
+                scheduler = Scheduler(self.jobs)
+                print("discovering jobs")
+                scheduler.handle_jobs()
+
+                time.sleep(1)
+                print("start watching jobs")
+                scheduler.start()
+
                 self.loop()
 
             except yaml.YAMLError as exc:
@@ -103,11 +109,6 @@ class Scene:
                                     self.mc.postToChat("Autowalk on")
                                     reWalk = True
 
-                        #if next((x for x in a if x.entityId == block.GLASS), None) is not None:
-
-                        #Don't fall
-                        mc.setBlocks(x-1,DEFAULT_POS_Y-1,z-1, x+5,DEFAULT_POS_Y-1,z-1, block.GLASS)
-                        time.sleep(0.1)
                         mc.player.setPos(x,DEFAULT_POS_Y,z-0.5)
 
                         #FIXME: this is not a good game pattern
@@ -116,12 +117,13 @@ class Scene:
                         if (x>=(-70 + 10*len(job.fountains))):
                             exit_job = True
 
-                except:
+                except Exception as e:
                     print "GOT A PROBLEM"
+                    print(e)
+
                 #Sleep more before changing job
                 self.mc.postToChat("Stay on watching latest job for 10 seconds...")
                 time.sleep(10)
-
 
     def start_loop(self):
         self.do_loop = True
@@ -129,12 +131,38 @@ class Scene:
     def stop_loop(self):
         self.do_loop = False
 
-class Job(threading.Thread):
+class Scheduler(threading.Thread):
+    def __init__(self, jobs):
+        self.jobs = jobs
+        super(Scheduler, self).__init__()
+        self.setDaemon(True)
+        self._stop_event = threading.Event()
+
+    def handle_jobs(self):
+        for job in self.jobs:
+            try:
+                print("dealing with job {}", job)
+                job.collect()
+                job.draw()
+                time.sleep(1)
+            except:
+                print("problem in job loop")
+
+    def run(self):
+        while True:
+            self.handle_jobs()
+
+    def stop(self):
+        for job in self.jobs:
+            job._stop_event.set()
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+
+class Job:
     """Jobs : can be a branch or a simple job, only URL is known by code """
     def __init__(self, id, url, auth, material, mc):
-        super(Job, self).__init__()
-        self._stop_event = threading.Event()
-        self.setDaemon(True)
         self.id = id
         self.mc = mc
         self.url = url
@@ -142,12 +170,6 @@ class Job(threading.Thread):
         self.material=material
         #TODO : would be clearer to have a build list instead of fountain keyword
         self.fountains = {} #int id: (status: , stages: , f:)
-
-    def run(self):
-        while True :
-            self.collect()
-            self.draw()
-            time.sleep(JOB_REFRESH_TIME)
 
     def collect(self):
         print("[job-{}] Discovering".format(self.id))
@@ -202,7 +224,7 @@ class Job(threading.Thread):
                     -(MAX_OCEAN_Z-10)+self.id*12, self.material, self.fountains[job_id]['status'], self.fountains[job_id]['stages'])
 
                 self.fountains[job_id]['f'] = f
-                time.sleep(10)
+
             f = self.fountains[job_id]['f']
 
             #TODO : if something changed, would be good to teleport to position before rendering (pause loop, teleport, sleep 10, loop again)
@@ -212,13 +234,6 @@ class Job(threading.Thread):
 
             if should_draw:
                 f.draw_flow()
-
-    def stop(self):
-        self._stop_event.set()
-        self.clear()
-
-    def stopped(self):
-        return self._stop_event.is_set()
 
     def __cmp__(self, rhs):
         return hash(self) - hash(rhs)
@@ -292,6 +307,10 @@ class Fountain:
                           self.x+7,self.y-2,self.z+7,
                           block.COBBLESTONE)
 
+        #Path (height may be dynamic)
+        mc.setBlocks(self.x-7, 14, self.z-7, self.x+7, 14, self.z-7, block.GLASS)
+
+
     def set_stages(self, num):
         prev_height = self.height
         self.height=num
@@ -325,7 +344,7 @@ class Fountain:
 
         #Unstable builds get flammes
         if (self.status==JOB_UNSTABLE):
-            self.mc.setBlocks(self.x-1, self.y+self.height+2, self.z-1, self.x+1, self.y+self.height+2,self.z+1,block.FIRE)
+            self.mc.setBlocks(self.x-1, self.y+self.height+2, self.z-1, self.x+1, self.y+self.height+2,self.z+1,block.TNT)
 
         self.previous_status=self.status
 
